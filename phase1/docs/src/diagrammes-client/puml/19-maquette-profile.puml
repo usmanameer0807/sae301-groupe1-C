@@ -1,0 +1,31 @@
+@startsalt
+{+
+  { [ Cartes ] | [ Battles ] | [ Profil ] | [ Se deconnecter ] }
+  ==
+  <b>Profil de alice (u_001)
+  Statut : Non legitime
+  Valeur totale de mes cartes : 21 VA
+  .
+  {+
+    <b>Legitimation
+    Recommandations valides : 2 sur 3
+    [ Demander la legitimation ]
+  }
+  .
+  {+
+    <b>Mes cartes
+    {#
+      Id | Langage | VA | Statut | Origine
+      c_001 | Python | 14 | AUTHENTIFIEE | creee par moi
+      c_007 | Go | 7 | ACTIVE | revendiquee
+    }
+    [ Authentifier la carte selectionnee ]
+  }
+  .
+  {+
+    <b>Mes recommandations
+    Cartes recommandees par moi | c_002 R, c_003 Rust
+    Recommandations recues | c_001 : 4
+  }
+}
+@endsalt

@@ -1,0 +1,45 @@
+@startuml 06-sequence-repudiate
+title Séquence : répudiation d'une recommandation
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "CardsController" as CC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> CC : sélectionne une carte déjà recommandée\net clique « Répudier »
+
+CC -> CC : vérifie que la carte figure dans\ncartesRecommandees
+
+alt Carte non recommandée côté client
+  CC --> Utilisateur : bouton grisé / message d'information
+else Carte recommandée
+  CC -> RS : repudiate(cardId)
+  RS -> SC : send({"type":"repudiate","cardId":"c_001"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(carte existante, recommandation active\nde cet utilisateur)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"CARD_NOT_FOUND"\nou "NOT_RECOMMENDED"}
+    MR -> RH : onMessage(json)
+    RH -> CC : onError(code)
+    CC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Répudiation enregistrée
+    note over S : Le serveur inscrit l'action dans un bloc.\nLa recommandation n'est plus active\n(VA - 1) mais son historique\nreste dans la blockchain.
+    S --> MR : {"type":"repudiate_ok","cardId":"c_001","valeur":11}
+    MR -> RH : onMessage(json)
+    RH -> CS : retire cardId de cartesRecommandees,\nmet à jour la valeur de la carte,\ndécrémente nbRecommandationsValides
+    RH -> CC : onStateChanged()  (via Platform.runLater)
+    CC --> Utilisateur : la VA de la carte est mise à jour,\nle bouton redevient « Recommander »
+  end
+end
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml 01-diagramme-cas-utilisation
+title Cas d'utilisation du client
+
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam packageStyle rectangle
+
+actor "Utilisateur" as User
+actor "Bot\n(facultatif)" as Bot
+actor "Serveur" as Serveur
+
+User <|-- Bot
+
+rectangle "Client SAÉ Recommender" {
+
+  usecase "Se connecter au serveur" as UC1
+  usecase "Se déconnecter" as UC2
+
+  usecase "Créer une carte" as UC3
+  usecase "Consulter les cartes" as UC4
+  usecase "Consulter ses recommandations\net les recommandations reçues" as UC5
+  usecase "Consulter les utilisateurs connectés" as UC6
+
+  usecase "Recommander une carte" as UC7
+  usecase "Répudier une recommandation" as UC8
+
+  usecase "Lancer une battle" as UC9
+  usecase "Voter dans une battle" as UC10
+  usecase "Consulter les battles" as UC11
+
+  usecase "Demander une légitimation" as UC12
+  usecase "Revendiquer une carte" as UC13
+  usecase "Authentifier une carte" as UC14
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+
+' Le serveur valide les actions
+UC1 --> Serveur
+UC3 --> Serveur
+UC7 --> Serveur
+UC8 --> Serveur
+UC9 --> Serveur
+UC10 --> Serveur
+UC12 --> Serveur
+UC13 --> Serveur
+UC14 --> Serveur
+
+' Liens entre cas d'utilisation
+UC3 ..> UC1 : <<include>>
+UC7 ..> UC1 : <<include>>
+UC9 ..> UC1 : <<include>>
+UC13 ..> UC12 : <<include>>
+UC14 ..> UC12 : <<include>>
+
+@enduml

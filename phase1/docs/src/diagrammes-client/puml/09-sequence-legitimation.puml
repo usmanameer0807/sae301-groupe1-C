@@ -1,0 +1,45 @@
+@startuml 09-sequence-legitimation
+title Séquence : demande de légitimation
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "ProfileController" as PC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> PC : sélectionne un langage\net clique « Demander la légitimation »
+
+PC -> PC : vérifie côté client\n(nbRecommandationsValides >= 3,\nutilisateur pas déjà légitimé)
+
+alt Conditions non remplies côté client
+  PC --> Utilisateur : bouton grisé /\nmessage « 2 recommandations sur 3 »
+else Conditions remplies
+  PC -> RS : requestLegitimation()
+  RS -> SC : send({"type":"request_legitimation"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(au moins 3 recommandations valides,\nutilisateur pas déjà légitimé)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"THRESHOLD_NOT_REACHED"\nou "INVALID_DATA"}
+    MR -> RH : onMessage(json)
+    RH -> PC : onError(code)
+    PC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Légitimation accordée
+    note over S : Le serveur inscrit l'action dans un bloc\net passe is_legitimate à true\npour cet utilisateur
+    S --> MR : {"type":"legitimation_ok","user":{...}}
+    MR -> RH : onMessage(json)
+    RH -> CS : met à jour utilisateurCourant\n(isLegitimate = true)
+    RH -> PC : onStateChanged()  (via Platform.runLater)
+    PC --> Utilisateur : badge « Légitimé » affiché,\nboutons « Revendiquer » et « Authentifier » activés
+  end
+end
+
+@enduml

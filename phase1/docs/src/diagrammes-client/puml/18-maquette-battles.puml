@@ -1,0 +1,22 @@
+@startsalt
+{+
+  { [ Cartes ] | [ Battles ] | [ Profil ] | [ Se deconnecter ] }
+  ==
+  <b>Lancer une battle
+  { Ma carte : | ^Python^R^ | Carte adverse : | ^R^Julia^ | [ Lancer une battle ] }
+  Conditions : meme domaine, VA minimale 5, proprietaire d'une des deux cartes
+  .
+  {+
+    <b>Battle en cours : b_001 (DataScience)
+    Temps restant : 42 s
+    { [ Voter Python ] | [ Voter R ] }
+    Un utilisateur = un vote
+  }
+  .
+  <b>Battles terminees
+  {#
+    Battle | Carte A | Carte B | Votes | Gagnante | Perdante
+    b_000 | Rust | C | 5 - 2 | Rust | C (INACTIVE)
+  }
+}
+@endsalt

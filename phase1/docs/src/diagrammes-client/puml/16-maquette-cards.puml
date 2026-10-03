@@ -1,0 +1,24 @@
+@startsalt
+{+
+  { [ Cartes ] | [ Battles ] | [ Profil ] | [ Se deconnecter ] }
+  ==
+  { <b>Cartes de la plateforme | [ Nouvelle carte ] }
+  { Domaine : | ^Tous^Web^GameDev^DataScience^Systems^Mobile^ }
+  .
+  {#
+    Id | Langage | Domaine | VA | Statut | Proprietaire
+    c_001 | Python | DataScience | 14 | AUTHENTIFIEE | alice
+    c_002 | R | DataScience | 7 | ACTIVE | omar
+    c_003 | Rust | Systems | 6 | ACTIVE | bot_demo
+    c_004 | C++ | GameDev | 9 | EN_BATTLE | omar
+    c_005 | PHP | Web | 0 | INACTIVE | alice
+  }
+  .
+  {+
+    <b>Carte selectionnee : Rust (c_003)
+    Createur historique : Graydon Hoare, 2010
+    Description : langage systeme axe sur la surete memoire
+    { [ Recommander ] | [ Repudier ] | [ Revendiquer ] }
+  }
+}
+@endsalt

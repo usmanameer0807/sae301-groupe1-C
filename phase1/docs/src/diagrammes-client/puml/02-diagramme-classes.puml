@@ -1,0 +1,210 @@
+@startuml 02-diagramme-classes
+title Diagramme de classes du client
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+hide empty members
+
+' ===== Énumérations =====
+enum Domaine {
+  Web
+  GameDev
+  DataScience
+  Systems
+  Mobile
+}
+
+enum StatutCarte {
+  ACTIVE
+  EN_BATTLE
+  AUTHENTIFIEE
+  INACTIVE
+}
+
+enum StatutBattle {
+  EN_COURS
+  TERMINEE
+}
+
+enum ErrorCode {
+  INVALID_DATA
+  USERNAME_TAKEN
+  CARD_NOT_FOUND
+  CARD_NOT_ACTIVE
+  DUPLICATE_CARD
+  ALREADY_RECOMMENDED
+  NOT_RECOMMENDED
+  BATTLE_NOT_FOUND
+  BATTLE_ALREADY_ACTIVE
+  ALREADY_VOTED
+  NOT_LEGITIMATE
+  THRESHOLD_NOT_REACHED
+  CARDS_NOT_COMPATIBLE
+  VA_TOO_LOW
+  ALREADY_AUTHENTICATED
+  SERVER_BUSY
+  INTERNAL_ERROR
+  MAX_CARDS_REACHED
+  NOT_ALLOWED
+  BLOCKCHAIN_CORRUPTED
+}
+
+' ===== Modèle =====
+class Card {
+  - id : String
+  - nom : String
+  - createurHistorique : String
+  - anneeCreation : int
+  - domaine : Domaine
+  - description : String
+  - proprietaireId : String
+  - createurId : String
+  - valeur : int
+  - statut : StatutCarte
+  - estAuthentifiee : boolean
+  - authentifieePar : String
+  - dateAuthentification : String
+  - winCount : int
+  - isLegitimate : boolean
+  - createdAt : String
+  + estRecommandable() : boolean
+  + peutEntrerEnBattle() : boolean
+}
+
+class User {
+  - id : String
+  - username : String
+  - isLegitimate : boolean
+  - isBot : boolean
+  - nbRecommandationsValides : int
+}
+
+class Battle {
+  - id : String
+  - carteAId : String
+  - carteBId : String
+  - domaine : Domaine
+  - statut : StatutBattle
+  - dureeSecondes : int
+  - votesA : int
+  - votesB : int
+  - gagnanteId : String
+  - dejaVote : boolean
+}
+
+class ClientState {
+  - utilisateurCourant : User
+  - cartesVisibles : List<Card>
+  - cartesPossedees : List<Card>
+  - cartesCreees : List<Card>
+  - cartesRecommandees : List<String>
+  - recommandationsRecues : List<String>
+  - utilisateursConnectes : List<User>
+  - battles : List<Battle>
+}
+
+' ===== Réseau =====
+class ServerConnection {
+  - host : String
+  - port : int
+  - socket : Socket
+  - out : PrintWriter
+  - in : BufferedReader
+  + connect()
+  + send(json : String)
+  + close()
+  + isConnected() : boolean
+}
+
+class MessageReader <<Thread>> {
+  - running : boolean
+  + run()
+  + stop()
+}
+
+' ===== Services =====
+class RequestService {
+  + login(username : String)
+  + createCard(nom, createurHistorique, anneeCreation, domaine, description)
+  + recommend(cardId : String)
+  + repudiate(cardId : String)
+  + launchBattle(cardAId : String, cardBId : String)
+  + vote(battleId : String, cardId : String)
+  + requestLegitimation()
+  + claimCard(cardId : String)
+  + authenticateCard(cardId : String)
+  + disconnect()
+}
+
+class ResponseHandler {
+  + onMessage(json : String)
+  + handleResponse(...)
+  + handleNotification(...)
+  + handleError(code : ErrorCode)
+}
+
+interface ViewListener {
+  + onStateChanged()
+  + onError(code : ErrorCode)
+}
+
+' ===== Vue =====
+class MainApp {
+  + start(stage : Stage)
+}
+
+class SceneManager {
+  + showLogin()
+  + showMain()
+}
+
+class LoginController
+class MainController
+class CardsController
+class CreateCardController
+class BattlesController
+class ProfileController
+
+' ===== Relations modèle =====
+Card --> Domaine
+Card --> StatutCarte
+Battle --> Domaine
+Battle --> StatutBattle
+ClientState o-- "0..*" Card
+ClientState o-- "0..*" Battle
+ClientState o-- "0..*" User
+ClientState --> "1" User : utilisateurCourant
+
+' ===== Relations réseau / services =====
+RequestService --> ServerConnection
+MessageReader --> ServerConnection
+MessageReader --> ResponseHandler
+ResponseHandler --> ClientState
+ResponseHandler --> ErrorCode
+ResponseHandler o-- "0..*" ViewListener
+
+' ===== Relations vue =====
+MainApp --> SceneManager
+SceneManager --> LoginController
+SceneManager --> MainController
+
+LoginController ..|> ViewListener
+MainController ..|> ViewListener
+CardsController ..|> ViewListener
+CreateCardController ..|> ViewListener
+BattlesController ..|> ViewListener
+ProfileController ..|> ViewListener
+
+LoginController --> RequestService
+CardsController --> RequestService
+CreateCardController --> RequestService
+BattlesController --> RequestService
+ProfileController --> RequestService
+
+CardsController ..> ClientState
+BattlesController ..> ClientState
+ProfileController ..> ClientState
+MainController ..> ClientState
+
+@enduml

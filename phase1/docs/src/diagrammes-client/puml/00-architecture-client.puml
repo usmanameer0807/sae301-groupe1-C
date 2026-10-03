@@ -1,0 +1,83 @@
+@startuml 00-architecture-client
+title Architecture du client JavaFX
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+package "Client JavaFX" {
+
+  package "Couche 1 - Vue (FXML + CSS)" as L1 {
+    [login.fxml]
+    [main.fxml]
+    [cards.fxml]
+    [create_card.fxml]
+    [battles.fxml]
+    [profile.fxml]
+    [style.css]
+  }
+
+  package "Couche 2 - Controleurs (Java)" as L2 {
+    [LoginController]
+    [MainController]
+    [CardsController]
+    [CreateCardController]
+    [BattlesController]
+    [ProfileController]
+    [SceneManager]
+  }
+
+  package "Couche 3 - Services et reseau" as L3 {
+    [RequestService]
+    [ResponseHandler]
+    [ServerConnection]
+    [MessageReader]
+  }
+
+  package "Couche 4 - Modele" as L4 {
+    [ClientState]
+    [Card]
+    [User]
+    [Battle]
+  }
+
+  package "Couche 5 - Serialisation" as L5 {
+    [JsonUtil]
+  }
+}
+
+node "Serveur C" as Serveur
+
+' Vue -> Controleurs (fx:controller)
+[login.fxml] --> [LoginController]
+[main.fxml] --> [MainController]
+[cards.fxml] --> [CardsController]
+[create_card.fxml] --> [CreateCardController]
+[battles.fxml] --> [BattlesController]
+[profile.fxml] --> [ProfileController]
+
+' Controleurs -> Services
+[LoginController] --> [RequestService] : demande
+[CardsController] --> [RequestService]
+[CreateCardController] --> [RequestService]
+[BattlesController] --> [RequestService]
+[ProfileController] --> [RequestService]
+[SceneManager] --> [MainController]
+
+' Services et reseau
+[RequestService] --> [ServerConnection] : send(json)
+[MessageReader] --> [ServerConnection] : lit les lignes
+[MessageReader] --> [ResponseHandler] : onMessage(json)
+
+' Services -> Modele et serialisation
+[ResponseHandler] --> [ClientState] : met a jour
+[ResponseHandler] ..> [CardsController] : Platform.runLater
+[ClientState] o-- [Card]
+[ClientState] o-- [User]
+[ClientState] o-- [Battle]
+[RequestService] --> [JsonUtil]
+[ResponseHandler] --> [JsonUtil]
+
+' Reseau -> Serveur
+[ServerConnection] <--> [Serveur] : Socket TCP\nJSON UTF-8 (\\n)
+
+@enduml

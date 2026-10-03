@@ -1,0 +1,51 @@
+@startuml 11-sequence-revendication
+title Séquence : revendication d'une carte
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "CardsController" as CC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> CC : sélectionne une carte d'un autre utilisateur\net clique « Revendiquer »
+
+CC -> CC : vérifie côté client\n(utilisateur légitimé,\npropriétaire de la carte non légitimé,\ncarte pas déjà à lui)
+
+alt Conditions non remplies côté client
+  CC --> Utilisateur : bouton grisé / message d'information
+else Conditions remplies
+  CC -> RS : claimCard(cardId)
+  RS -> SC : send({"type":"claim_card","cardId":"c_001"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(carte existante, demandeur légitimé,\npropriétaire actuel non légitimé)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"CARD_NOT_FOUND"\nou "NOT_LEGITIMATE"\nou "NOT_ALLOWED"}
+    MR -> RH : onMessage(json)
+    RH -> CC : onError(code)
+    CC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Revendication acceptée
+    note over S : Le serveur inscrit l'action ACTION_CLAIM_CARD\ndans un bloc. proprietaireId devient le demandeur,\ncreateurId reste inchangé.
+    S --> MR : {"type":"claim_ok","card":{...}}\n(envoyé aussi à l'ancien propriétaire\nsi celui-ci est connecté)
+    MR -> RH : onMessage(json)
+    RH -> CS : met à jour la carte (proprietaireId),\najoute-la dans cartesPossedees
+    RH -> CC : onStateChanged()  (via Platform.runLater)
+    CC --> Utilisateur : la carte apparaît dans « Mes cartes »
+  end
+end
+
+== Côté ancien propriétaire (si connecté) ==
+
+MR -> RH : onMessage(json)  (notification claim_ok)
+RH -> CS : retire la carte de cartesPossedees
+RH -> CC : onStateChanged()  (via Platform.runLater)
+
+@enduml

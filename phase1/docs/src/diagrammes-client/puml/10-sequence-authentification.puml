@@ -1,0 +1,45 @@
+@startuml 10-sequence-authentification
+title Séquence : authentification d'une carte
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "ProfileController" as PC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> PC : sélectionne une de ses cartes\net clique « Authentifier »
+
+PC -> PC : vérifie côté client\n(utilisateur légitimé,\ncarte possédée, pas déjà authentifiée)
+
+alt Conditions non remplies côté client
+  PC --> Utilisateur : bouton grisé / message d'information
+else Conditions remplies
+  PC -> RS : authenticateCard(cardId)
+  RS -> SC : send({"type":"authenticate_card","cardId":"c_001"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(carte existante, utilisateur légitimé,\nutilisateur propriétaire de la carte,\ncarte pas déjà authentifiée)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"CARD_NOT_FOUND"\nou "NOT_LEGITIMATE"\nou "NOT_ALLOWED"\nou "ALREADY_AUTHENTICATED"}
+    MR -> RH : onMessage(json)
+    RH -> PC : onError(code)
+    PC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Authentification acceptée
+    note over S : Le serveur inscrit l'action dans un bloc,\npasse la carte à AUTHENTIFIEE,\najoute +10 VA et verrouille\nnom, domaine, créateur historique\net année de création
+    S --> MR : {"type":"authenticate_ok","card":{...}}
+    MR -> RH : onMessage(json)
+    RH -> CS : met à jour la carte\n(statut AUTHENTIFIEE, estAuthentifiee = true,\nauthentifieePar, dateAuthentification,\nvaleur + 10)
+    RH -> PC : onStateChanged()  (via Platform.runLater)
+    PC --> Utilisateur : badge officiel affiché sur la carte,\nchamps verrouillés
+  end
+end
+
+@enduml

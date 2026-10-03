@@ -1,0 +1,18 @@
+@startsalt
+{+
+  <b>Nouvelle carte : langage de programmation
+  ==
+  {
+    Nom (50 max) | "Python                    "
+    Createur historique (100 max) | "Guido van Rossum         "
+    Annee de creation | "1991                      "
+    Domaine | ^Web^GameDev^DataScience^Systems^Mobile^
+    Description (500 max) | "Langage generaliste lisible. "
+  }
+  .
+  Message d'erreur sous le champ concerne
+  Vous possedez 3 cartes actives sur 10
+  .
+  { [ Creer ] | [ Annuler ] }
+}
+@endsalt

@@ -1,0 +1,51 @@
+@startuml 03-sequence-login
+title Séquence : connexion au serveur
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "LoginController" as LC
+participant "SceneManager" as SM
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> LC : saisit IP, port, nom\net clique « Se connecter »
+LC -> LC : vérifie les champs\n(non vides, port numérique)
+
+LC -> SC : connect(host, port)
+SC -> S : ouverture du socket TCP
+
+alt Serveur plein (MAX_CLIENTS = 20)
+  S --> SC : {"type":"error","code":"SERVER_BUSY"}
+  SC --> LC : connexion refusée
+  LC --> Utilisateur : message « Serveur occupé, réessayez plus tard »
+else Connexion acceptée
+  S --> SC : connexion établie
+  LC -> MR : démarre le thread de lecture
+  LC -> RS : login(username)
+  RS -> SC : send({"type":"login","username":"..."})
+  SC -> S : message JSON + \n
+
+  alt Nom déjà utilisé
+    S --> MR : {"type":"error","code":"USERNAME_TAKEN"}
+    MR -> RH : onMessage(json)
+    RH -> LC : onError(USERNAME_TAKEN)
+    LC --> Utilisateur : message « Nom d'utilisateur déjà pris »
+  else Connexion réussie
+    note over S : Le serveur parcourt la blockchain\npour reconstituer le contexte\nde l'utilisateur
+    S --> MR : {"type":"login_ok","user":{...},"context":{...}}
+    MR -> RH : onMessage(json)
+    RH -> CS : remplit utilisateurCourant, cartes,\nrecommandations, battles
+    RH -> LC : onStateChanged()  (via Platform.runLater)
+    LC -> SM : showMain()
+    SM --> Utilisateur : affiche l'écran principal
+  end
+end
+
+@enduml

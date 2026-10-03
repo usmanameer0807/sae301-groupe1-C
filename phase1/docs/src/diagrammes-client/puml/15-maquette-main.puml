@@ -1,0 +1,27 @@
+@startsalt
+{+
+  { [ Cartes ] | [ Battles ] | [ Profil ] | [ Se deconnecter ] }
+  ==
+  <b>Bienvenue, alice (connecte)
+  .
+  {+
+    <b>Mes statistiques
+    Cartes possedees | 3 sur 10
+    Recommandations donnees | 2 sur 3 requises
+    Statut | Non legitime
+    Battles en cours | 1
+  }
+  .
+  {+
+    <b>Utilisateurs connectes (3 sur 20)
+    {#
+      Utilisateur | Type | Legitime
+      alice (vous) | Humain | Non
+      omar | Humain | Oui
+      bot_demo | Bot | Non
+    }
+  }
+  .
+  Derniere notification : la battle b_001 a commence
+}
+@endsalt

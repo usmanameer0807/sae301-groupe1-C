@@ -1,0 +1,16 @@
+@startsalt
+{+
+  <b>SAE Recommender
+  Recommandez et confrontez les langages de programmation
+  .
+  {
+    Adresse IP du serveur | "127.0.0.1          "
+    Port | "5000                "
+    Nom d'utilisateur | "alice               "
+  }
+  .
+  [ Se connecter ]
+  .
+  Message d'erreur affiche ici
+}
+@endsalt

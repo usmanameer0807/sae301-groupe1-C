@@ -1,0 +1,49 @@
+@startuml 12-sequence-disconnect
+title Séquence : déconnexion du client
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "MainController" as MC
+participant "SceneManager" as SM
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+== Cas 1 : déconnexion demandée par l'utilisateur ==
+
+Utilisateur -> MC : clique sur « Se déconnecter »\nou ferme la fenêtre
+MC -> RS : disconnect()
+RS -> SC : send({"type":"disconnect"})
+SC -> S : message JSON + \n
+
+note over S : Le serveur libère la socket du client.\nLes actions déjà acceptées sont\ndéjà dans la blockchain.\nUne battle en cours continue\njusqu'à la fin des 60 secondes.
+
+S --> MR : {"type":"disconnect_ok"}
+MR -> RH : onMessage(json)
+RH -> MR : stop()
+MC -> SC : close()
+MC -> CS : vide l'état (cartes, battles,\nutilisateurs connectés)
+MC -> SM : showLogin()
+SM --> Utilisateur : retour à l'écran de connexion
+
+== Cas 2 : connexion perdue (serveur arrêté, réseau coupé) ==
+
+S -[#red]x SC : socket fermée ou réseau coupé
+MR -> MR : détecte la fin du flux\n(lecture impossible)
+MR -> RH : onConnectionLost()
+RH -> CS : vide l'état
+RH -> MC : onError(connexion perdue)  (via Platform.runLater)
+MC --> Utilisateur : boîte de dialogue\n« Connexion au serveur perdue »
+MC -> SC : close()
+MC -> SM : showLogin()
+SM --> Utilisateur : retour à l'écran de connexion
+
+note over Utilisateur, S : Si une action était en cours au moment de la coupure,\nelle est considérée comme non réalisée.\nAprès une reconnexion, le serveur reconstitue\nle contexte depuis la blockchain.
+
+@enduml

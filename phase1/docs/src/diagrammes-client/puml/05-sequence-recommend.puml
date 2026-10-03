@@ -1,0 +1,45 @@
+@startuml 05-sequence-recommend
+title Séquence : recommandation d'une carte
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "CardsController" as CC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> CC : sélectionne une carte\net clique « Recommander »
+
+CC -> CC : vérifie que la carte est recommandable\n(statut ACTIVE ou AUTHENTIFIEE)
+
+alt Carte non recommandable côté client
+  CC --> Utilisateur : bouton grisé / message d'information
+else Carte recommandable
+  CC -> RS : recommend(cardId)
+  RS -> SC : send({"type":"recommend","cardId":"c_001"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(carte existante, active, pas déjà recommandée)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"CARD_NOT_FOUND"\nou "CARD_NOT_ACTIVE"\nou "ALREADY_RECOMMENDED"}
+    MR -> RH : onMessage(json)
+    RH -> CC : onError(code)
+    CC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Recommandation enregistrée
+    note over S : Le serveur inscrit l'action\ndans un bloc de la blockchain\net recalcule la VA de la carte
+    S --> MR : {"type":"recommend_ok","cardId":"c_001","valeur":12}
+    MR -> RH : onMessage(json)
+    RH -> CS : ajoute cardId dans cartesRecommandees,\nmet à jour la valeur de la carte,\nincrémente nbRecommandationsValides
+    RH -> CC : onStateChanged()  (via Platform.runLater)
+    CC --> Utilisateur : la VA de la carte est mise à jour,\nle bouton devient « Répudier »
+  end
+end
+
+@enduml

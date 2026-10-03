@@ -1,0 +1,45 @@
+@startuml 07-sequence-battle
+title Séquence : lancement d'une battle
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "BattlesController" as BC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> BC : choisit sa carte et la carte adverse\net clique « Lancer une battle »
+
+BC -> BC : vérifie côté client\n(même domaine, VA >= 5,\nstatut ACTIVE ou AUTHENTIFIEE)
+
+alt Conditions non remplies côté client
+  BC --> Utilisateur : bouton grisé / message d'information
+else Conditions remplies
+  BC -> RS : launchBattle(cardAId, cardBId)
+  RS -> SC : send({"type":"launch_battle",\n"cardAId":"c_001","cardBId":"c_002"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(cartes existantes et actives, demandeur\npropriétaire d'une des deux cartes,\nmême domaine, VA >= 5,\naucune battle en cours sur ces cartes)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"CARD_NOT_FOUND"\nou "CARD_NOT_ACTIVE"\nou "NOT_ALLOWED"\nou "CARDS_NOT_COMPATIBLE"\nou "VA_TOO_LOW"\nou "BATTLE_ALREADY_ACTIVE"}
+    MR -> RH : onMessage(json)
+    RH -> BC : onError(code)
+    BC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Battle acceptée
+    note over S : Le serveur inscrit l'action dans un bloc,\npasse les deux cartes à EN_BATTLE\net démarre le chrono de 60 secondes
+    S --> MR : {"type":"battle_started","battle":{...}}\n(envoyé à tous les clients connectés)
+    MR -> RH : onMessage(json)
+    RH -> CS : ajoute la battle (EN_COURS),\npasse les deux cartes à EN_BATTLE
+    RH -> BC : onStateChanged()  (via Platform.runLater)
+    BC --> Utilisateur : la battle apparaît dans la liste\navec un compte à rebours de 60 secondes
+  end
+end
+
+@enduml

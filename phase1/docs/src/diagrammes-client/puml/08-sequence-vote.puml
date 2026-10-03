@@ -1,0 +1,54 @@
+@startuml 08-sequence-vote
+title Séquence : vote dans une battle
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "BattlesController" as BC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> BC : choisit une battle en cours\net clique sur la carte à soutenir
+
+BC -> BC : vérifie côté client\n(battle EN_COURS, dejaVote = false,\nutilisateur non propriétaire des cartes)
+
+alt Vote impossible côté client
+  BC --> Utilisateur : boutons de vote grisés / message d'information
+else Vote possible
+  BC -> RS : vote(battleId, cardId)
+  RS -> SC : send({"type":"vote",\n"battleId":"b_001","cardId":"c_001"})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(battle existante et en cours,\nutilisateur non propriétaire des cartes,\n1 seul vote par utilisateur)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"BATTLE_NOT_FOUND"\nou "ALREADY_VOTED"\nou "NOT_ALLOWED"}
+    MR -> RH : onMessage(json)
+    RH -> BC : onError(code)
+    BC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Vote enregistré
+    S --> MR : {"type":"vote_ok","battleId":"b_001"}
+    MR -> RH : onMessage(json)
+    RH -> CS : passe dejaVote à true\npour cette battle
+    RH -> BC : onStateChanged()  (via Platform.runLater)
+    BC --> Utilisateur : message « Vote enregistré »,\nboutons de vote désactivés
+  end
+end
+
+== Fin des 60 secondes ==
+
+note over S : Le serveur compte les votes.\nEn cas d'égalité : VA initiale la plus élevée,\npuis id le plus petit.\nIl inscrit le résultat dans un bloc,\nla gagnante récupère les recommandations\nactives de la perdante,\nla perdante passe à INACTIVE.
+
+S --> MR : {"type":"battle_finished","battle":{...,"gagnanteId":"c_001"},\n"cards":[{...},{...}]}\n(envoyé à tous les clients connectés)
+MR -> RH : onMessage(json)
+RH -> CS : battle passe à TERMINEE (votes, gagnanteId),\nmet à jour les deux cartes\n(valeur, winCount, statut)
+RH -> BC : onStateChanged()  (via Platform.runLater)
+BC --> Utilisateur : affiche le résultat de la battle\net la carte gagnante
+
+@enduml

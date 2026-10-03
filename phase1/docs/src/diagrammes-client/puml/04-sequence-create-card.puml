@@ -1,0 +1,45 @@
+@startuml 04-sequence-create-card
+title Séquence : création d'une carte
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam sequenceMessageAlign center
+
+actor Utilisateur
+participant "CreateCardController" as CC
+participant "RequestService" as RS
+participant "ServerConnection" as SC
+participant "MessageReader" as MR
+participant "ResponseHandler" as RH
+participant "ClientState" as CS
+participant "Serveur C" as S
+
+Utilisateur -> CC : remplit le formulaire\n(nom, créateur historique, année,\ndomaine, description)\net clique « Créer »
+
+CC -> CC : vérifie les champs\n(longueurs, année entière, domaine)
+
+alt Champs invalides côté client
+  CC --> Utilisateur : message d'erreur sous le formulaire
+else Champs valides
+  CC -> RS : createCard(nom, createurHistorique,\nanneeCreation, domaine, description)
+  RS -> SC : send({"type":"create_card","data":{...}})
+  SC -> S : message JSON + \n
+
+  S -> S : valide la demande\n(données, doublon, limite de 10 cartes actives)
+
+  alt Demande refusée
+    S --> MR : {"type":"error","code":"INVALID_DATA"\nou "DUPLICATE_CARD"\nou "MAX_CARDS_REACHED"}
+    MR -> RH : onMessage(json)
+    RH -> CC : onError(code)
+    CC --> Utilisateur : boîte de dialogue avec le message d'erreur
+  else Carte créée
+    note over S : Le serveur génère l'id de la carte,\nl'inscrit dans un bloc de la blockchain\net fixe proprietaireId = createurId
+    S --> MR : {"type":"card_created","card":{...}}
+    MR -> RH : onMessage(json)
+    RH -> CS : ajoute la carte dans cartesCreees,\ncartesPossedees et cartesVisibles
+    RH -> CC : onStateChanged()  (via Platform.runLater)
+    CC --> Utilisateur : confirmation et retour à la liste des cartes
+  end
+end
+
+@enduml
