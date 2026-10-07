@@ -32,7 +32,7 @@ Le client ne contient aucune règle métier décisive. Toutes les actions sont *
 | Format des messages | JSON, UTF-8, un message par ligne (délimiteur `\n`) |
 | Environnement | Linux Debian |
 
-> **Remarque :** seules les bibliothèques JavaFX et JUnit sont autorisées par le cahier des charges. Pour lire et écrire le JSON, nous devons soit demander l'autorisation d'utiliser une bibliothèque au responsable de la SAÉ, soit écrire une petite classe utilitaire nous-mêmes. Le choix sera confirmé en phase 2.
+
 
 ---
 
