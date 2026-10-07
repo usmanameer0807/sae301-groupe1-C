@@ -3,6 +3,8 @@ skinparam classAttributeIconSize 0
 skinparam defaultFontName Arial
 skinparam classFontSize 13
 skinparam classAttributeFontSize 12
+skinparam nodesep 60
+skinparam ranksep 60
 skinparam linetype ortho
 
 title Diagramme de classes - Client JavaFX
@@ -16,7 +18,6 @@ class LoginController {
 }
 
 class MainController {
-    - listeCartes : ListView
     - listeUtilisateurs : ListView
     - listeBattles : ListView
     --
@@ -25,13 +26,23 @@ class MainController {
 }
 
 class CardsController {
+    - listeCartes : ListView
     --
-    + creerCarte() : void
     + recommander() : void
     + repudier() : void
     + revendiquerCarte() : void
     + authentifierCarte() : void
     + demanderLegitimation() : void
+}
+
+class CreateCardController {
+    - champNom : TextField
+    - champAnnee : TextField
+    - listeDomaine : ComboBox
+    - zoneDescription : TextArea
+    --
+    + creerCarte() : void
+    + validerFormulaire() : boolean
 }
 
 class BattlesController {
@@ -83,6 +94,8 @@ class ResponseHandler {
 class ClientState {
     - utilisateur : User
     - cartes : List<Card>
+    - recommandees : List<String>
+    - recommandationsRecues : List<RecommandationRecue>
     - battles : List<Battle>
     - utilisateurs : List<User>
     --
@@ -110,7 +123,10 @@ class Card {
     - valeur : int
     - statut : String
     - estAuthentifiee : boolean
+    - authentifieePar : String
+    - dateAuthentification : String
     - winCount : int
+    - createdAt : String
 }
 
 class Battle {
@@ -125,6 +141,11 @@ class Battle {
     - gagnanteId : String
 }
 
+class RecommandationRecue {
+    - idCarte : String
+    - idUtilisateur : String
+}
+
 class JsonUtil {
     --
     + versJson(objet : Object) : String
@@ -134,12 +155,14 @@ class JsonUtil {
 LoginController --> SceneManager
 MainController --> SceneManager
 CardsController --> SceneManager
+CreateCardController --> SceneManager
 BattlesController --> SceneManager
 ProfileController --> SceneManager
 
 LoginController --> RequestService
 MainController --> RequestService
 CardsController --> RequestService
+CreateCardController --> RequestService
 BattlesController --> RequestService
 ProfileController --> RequestService
 
@@ -155,5 +178,6 @@ RequestService --> JsonUtil
 ClientState "1" *-- "0..*" Card
 ClientState "1" *-- "0..*" Battle
 ClientState "1" *-- "0..*" User
+ClientState "1" *-- "0..*" RecommandationRecue
 
 @enduml
