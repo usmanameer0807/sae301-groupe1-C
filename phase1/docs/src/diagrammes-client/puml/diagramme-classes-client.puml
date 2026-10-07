@@ -3,7 +3,6 @@ skinparam classAttributeIconSize 0
 skinparam defaultFontName Arial
 skinparam classFontSize 13
 skinparam classAttributeFontSize 12
-skinparam linetype ortho
 
 title Diagramme de classes - Client JavaFX
 
